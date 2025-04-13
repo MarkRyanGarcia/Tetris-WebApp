@@ -153,28 +153,38 @@ export default function TetrisGame() {
     }, [nextPiece, getRandomPiece, checkCollision]);
 
  
-const renderHoldPiece = () => {
-    if (!holdPiece) return Array(4).fill().map(() => Array(4).fill(null));
-    
-    const grid = Array(4).fill().map(() => Array(4).fill(null));
-    const shape = Tetrominoes[holdPiece][0]; // Always show first rotation for preview
-    
-    // Calculate center position
-    const width = Math.max(...shape.map(b => b.x)) + 1;
-    const height = Math.max(...shape.map(b => b.y)) + 1;
-    const offsetX = Math.floor((4 - width) / 2);
-    const offsetY = Math.floor((4 - height) / 2);
-    
-    shape.forEach(block => {
-        const x = block.x + offsetX;
-        const y = block.y + offsetY;
-        if (x >= 0 && x < 4 && y >= 0 && y < 4) {
-            grid[y][x] = holdPiece;
+    const renderHoldPiece = () => {
+        if (!holdPiece) return Array(4).fill().map(() => Array(4).fill(null));
+        
+        const grid = Array(4).fill().map(() => Array(4).fill(null));
+        const shape = Tetrominoes[holdPiece][0]; // Always show first rotation for preview
+        
+        // Calculate center position
+        const width = Math.max(...shape.map(b => b.x)) + 1;
+        const height = Math.max(...shape.map(b => b.y)) + 1;
+        const offsetX = Math.floor((4 - width) / 2);
+        const offsetY = Math.floor((4 - height) / 2);
+        
+        shape.forEach(block => {
+            const x = block.x + offsetX;
+            const y = block.y + offsetY;
+            if (x >= 0 && x < 4 && y >= 0 && y < 4) {
+                grid[y][x] = holdPiece;
+            }
+        });
+        
+        return grid;
+    };
+
+    const calculateGhostPosition = useCallback(() => {
+        if (!currentPiece) return { x: 0, y: 0 };
+        
+        let ghostY = position.y;
+        while (!checkCollision(position.x, ghostY + 1, rotation)) {
+            ghostY++;
         }
-    });
-    
-    return grid;
-};
+        return { x: position.x, y: ghostY };
+    }, [currentPiece, position, rotation, checkCollision]);
 
     const moveLeft = () => {
         if (checkCollision(position.x - 1, position.y, rotation)) return;
@@ -342,8 +352,9 @@ const renderHoldPiece = () => {
 
     const renderBoard = () => {
         const displayBoard = createEmptyBoard();
-
-        // Add locked pieces
+        const ghostPosition = calculateGhostPosition();
+    
+        // Add locked pieces first
         for (let y = 0; y < BOARD_HEIGHT; y++) {
             for (let x = 0; x < BOARD_WIDTH; x++) {
                 if (board[y][x]) {
@@ -351,8 +362,24 @@ const renderHoldPiece = () => {
                 }
             }
         }
-
-        // Add current piece
+    
+        // Add ghost piece
+        if (currentPiece && !gameOver) {
+            const shape = Tetrominoes[currentPiece][rotation];
+            for (const block of shape) {
+                const y = ghostPosition.y + block.y;
+                const x = ghostPosition.x + block.x;
+                
+                if (y >= 0 && x >= 0 && x < BOARD_WIDTH && y < BOARD_HEIGHT) {
+                    // Only add ghost if the cell is empty
+                    if (!displayBoard[y][x]) {
+                        displayBoard[y][x] = `ghost-${currentPiece}`;
+                    }
+                }
+            }
+        }
+    
+        // Add current piece (on top of ghost)
         if (currentPiece && !gameOver) {
             const shape = Tetrominoes[currentPiece][rotation];
             for (const block of shape) {
@@ -364,7 +391,7 @@ const renderHoldPiece = () => {
                 }
             }
         }
-
+    
         return displayBoard;
     };
 
@@ -433,7 +460,11 @@ const renderHoldPiece = () => {
                                 {row.map((cell, x) => (
                                     <div
                                         key={`${y}-${x}`}
-                                        className={`cell ${cell ? `cell-${cell}` : ''}`}
+                                        className={`cell ${
+                                            cell?.startsWith('ghost-') 
+                                                ? cell.replace('ghost-', 'cell-ghost-') 
+                                                : cell ? `cell-${cell}` : ''
+                                        }`}
                                     />
                                 ))}
                             </div>

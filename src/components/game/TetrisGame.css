@@ -190,6 +190,22 @@
 .preview-cell.T { background-color: #a000f0; box-shadow: 0 0 8px rgba(160, 0, 240, 0.7); }
 .preview-cell.Z { background-color: #f00000; box-shadow: 0 0 8px rgba(240, 0, 0, 0.7); }
 
+
+/* Ghost piece styles - make sure these come AFTER your regular piece styles */
+[class^="cell-ghost-"], 
+[class*=" cell-ghost-"] {
+    opacity: 0.3;
+    border: 1px dashed rgba(255, 255, 255, 0.5);
+}
+
+.cell-ghost-I { background-color: #00f0f0; }
+.cell-ghost-J { background-color: #0000f0; }
+.cell-ghost-L { background-color: #f0a000; }
+.cell-ghost-O { background-color: #f0f000; }
+.cell-ghost-S { background-color: #00f000; }
+.cell-ghost-T { background-color: #a000f0; }
+.cell-ghost-Z { background-color: #f00000; }
+
 /* Responsive adjustments */
 @media (max-width: 900px) {
     .game-layout {
